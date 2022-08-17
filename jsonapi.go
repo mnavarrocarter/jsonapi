@@ -35,11 +35,6 @@ func Wrap(fn any, opts ...OptsFn) *JsonHandler {
 	return h
 }
 
-// A StatusReporter reports the status of a response
-type StatusReporter interface {
-	ReportStatus() int
-}
-
 // An ErrorCaster casts any type to an error
 //
 // You can compose this interface to control how you want your errors to be serialized
@@ -69,20 +64,24 @@ type RequestValidator interface {
 
 // ApiError represents a standard error from the handler
 type ApiError struct {
-	Status    int                    `json:"status"`
-	Kind      string                 `json:"kind"`
-	Details   string                 `json:"details"`
-	Errors    []*ErrorItem           `json:"errors,omitempty"`
-	Meta      map[string]interface{} `json:"meta,omitempty"`
-	sourceErr error
+	StatusCode int                    `json:"status"`
+	Kind       string                 `json:"kind"`
+	Details    string                 `json:"details"`
+	Errors     []*ErrorItem           `json:"errors,omitempty"`
+	Meta       map[string]interface{} `json:"meta,omitempty"`
+	sourceErr  error
 }
 
 func (ae *ApiError) Error() string {
 	return ae.Details
 }
 
-func (ae *ApiError) ReportStatus() int {
-	return ae.Status
+func (ae *ApiError) Unwrap() error {
+	return ae.sourceErr
+}
+
+func (ae *ApiError) Status() int {
+	return ae.StatusCode
 }
 
 type ErrorItem struct {

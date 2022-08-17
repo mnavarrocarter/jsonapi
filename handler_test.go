@@ -135,7 +135,19 @@ func TestHandler(t *testing.T) {
 			handler: func() error {
 				return errors.New("there was an error")
 			},
-			expectedResponse: []byte(`{"status":400,"kind":"Domain Error","details":"there was an error"}` + "\n"),
+			expectedResponse: []byte(`{"status":500,"kind":"Unknown","details":"Request failed with unknown error"}` + "\n"),
+			expectedStatus:   http.StatusInternalServerError,
+			expectedLogCalls: 1,
+		},
+		{
+			name: "custom error response",
+			req: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "https://example.com", mustOpen(t, "valid.json"))
+			}(),
+			handler: func() error {
+				return customErr(400, errors.New("server error"), "customer error")
+			},
+			expectedResponse: []byte(`{"status":400,"kind":"Domain Error","details":"customer error"}` + "\n"),
 			expectedStatus:   http.StatusBadRequest,
 			expectedLogCalls: 1,
 		},
@@ -147,8 +159,8 @@ func TestHandler(t *testing.T) {
 			handler: func() (*testResp, error) {
 				return nil, errors.New("there was an error")
 			},
-			expectedResponse: []byte(`{"status":400,"kind":"Domain Error","details":"there was an error"}` + "\n"),
-			expectedStatus:   http.StatusBadRequest,
+			expectedResponse: []byte(`{"status":500,"kind":"Unknown","details":"Request failed with unknown error"}` + "\n"),
+			expectedStatus:   http.StatusInternalServerError,
 			expectedLogCalls: 1,
 		},
 		{
@@ -250,4 +262,30 @@ func TestHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func customErr(status int, prev error, msg string) *appError {
+	return &appError{
+		status: status,
+		prev:   prev,
+		msg:    msg,
+	}
+}
+
+type appError struct {
+	status int
+	prev   error
+	msg    string
+}
+
+func (e *appError) Status() int {
+	return e.status
+}
+
+func (e *appError) Unwrap() error {
+	return e.prev
+}
+
+func (e *appError) Error() string {
+	return e.msg
 }

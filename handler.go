@@ -1,7 +1,6 @@
 package jsonapi
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"reflect"
@@ -65,7 +64,7 @@ func (h *JsonHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// If the error is not nil, then we have to return it
 	// This is a domain error, so it should use the error status code and the original message.
 	if err != nil {
-		h.sendError(w, req, &domainError{err})
+		h.sendError(w, req, err)
 		return
 	}
 
@@ -81,12 +80,4 @@ func (h *JsonHandler) sendError(w http.ResponseWriter, r *http.Request, v interf
 	}
 
 	h.ResponseSender.SendResponse(w, err)
-}
-
-type domainError struct {
-	err error
-}
-
-func (de *domainError) Error() string {
-	return fmt.Sprintf("domain error: %s", de.err.Error())
 }
