@@ -135,6 +135,17 @@ func TestHandler(t *testing.T) {
 			expectedStatus:   http.StatusInternalServerError,
 		},
 		{
+			name: "nil error response",
+			req: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "https://example.com", mustOpen(t, "valid.json"))
+			}(),
+			handler: func() error {
+				return nil
+			},
+			expectedResponse: []byte(""),
+			expectedStatus:   http.StatusNoContent,
+		},
+		{
 			name: "panic response",
 			req: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://example.com", mustOpen(t, "valid.json"))

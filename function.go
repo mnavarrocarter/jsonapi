@@ -34,7 +34,11 @@ func reflectFunc(fn any) *reflectedFn {
 	case 1:
 		if t.Out(0).Implements(errorType) {
 			rFn.outFn = func(out []reflect.Value) (interface{}, error) {
-				return nil, out[0].Interface().(error)
+				if err, ok := out[0].Interface().(error); ok {
+					return nil, err
+				}
+
+				return nil, nil
 			}
 		} else {
 			rFn.outFn = func(out []reflect.Value) (interface{}, error) {
