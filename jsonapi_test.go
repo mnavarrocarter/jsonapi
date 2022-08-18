@@ -11,12 +11,12 @@ import (
 	"testing"
 )
 
-//go:embed _testdata
+//go:embed testdata
 var testdata embed.FS
 
 func mustOpen(t *testing.T, name string) fs.File {
 	t.Helper()
-	f, err := testdata.Open(fmt.Sprintf("_testdata/%s", name))
+	f, err := testdata.Open(fmt.Sprintf("testdata/%s", name))
 	if err != nil {
 		panic(err)
 	}
@@ -52,12 +52,4 @@ func (w *wrappedResolver) Resolve(req *http.Request, t reflect.Type, pos int) (r
 
 type customContext struct {
 	context.Context
-}
-
-type handlerSpy struct {
-	LogCalls int
-}
-
-func (s *handlerSpy) LogError(_ *http.Request, _ error) {
-	s.LogCalls++
 }

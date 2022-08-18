@@ -3,10 +3,8 @@ package jsonapi
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"reflect"
 )
@@ -65,99 +63,6 @@ func (d *defaults) Resolve(req *http.Request, t reflect.Type, pos int) (reflect.
 
 func (d *defaults) Validate(_ *http.Request) ([]*ErrorItem, error) {
 	return nil, nil
-}
-
-func (d *defaults) CastError(v interface{}) error {
-	apiErr := ApiError{
-		StatusCode: http.StatusInternalServerError,
-		Kind:       "Unknown",
-		Details:    "Request failed with unknown error",
-	}
-
-	if rep, ok := v.(interface {
-		Status() int
-	}); ok {
-		apiErr.StatusCode = rep.Status()
-	}
-
-	switch t := v.(type) {
-	case string:
-		apiErr.sourceErr = errors.New(t)
-	case error:
-		apiErr.sourceErr = t
-
-		// If we are dealing with a wrapped error, we assume that the wrapped error is the source
-		if wrapper, ok := t.(interface {
-			Unwrap() error
-		}); ok {
-			apiErr.Kind = "Domain Error"
-			apiErr.Details = t.Error()
-			apiErr.sourceErr = wrapper.Unwrap()
-		}
-
-		if errors.Is(t, ErrUnexpected) {
-			apiErr.StatusCode = http.StatusInternalServerError
-			apiErr.Kind = "Handler Error"
-			apiErr.Details = "Unexpected error while handling the request"
-		}
-
-		if errors.Is(t, ErrEmptyBody) {
-			apiErr.StatusCode = http.StatusBadRequest
-			apiErr.Kind = "Invalid Request"
-			apiErr.Details = "Request body cannot be empty"
-			apiErr.sourceErr = nil
-		}
-
-		if errors.Is(t, ErrArgumentUnsupported) || errors.Is(t, ErrArgumentResolution) {
-			apiErr.StatusCode = http.StatusInternalServerError
-			apiErr.Kind = "Handler Error"
-			apiErr.Details = "Could not resolve handler arguments"
-		}
-	case []*ErrorItem:
-		apiErr.StatusCode = http.StatusBadRequest
-		apiErr.Kind = "Invalid Request"
-		apiErr.Details = "Request body validation has failed"
-		apiErr.Errors = t
-	case *ApiError:
-		return t
-	default:
-		// Noop
-	}
-
-	return &apiErr
-}
-
-// LogError logs only wrapped errors
-func (d *defaults) LogError(_ *http.Request, err error) {
-	if wrapped, ok := err.(interface {
-		Unwrap() error
-	}); ok {
-		log.Println(wrapped.Unwrap().Error())
-	}
-}
-
-func (d *defaults) SendResponse(w http.ResponseWriter, v interface{}) {
-	if v == nil {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	status := http.StatusOK
-
-	if rep, ok := v.(interface {
-		Status() int
-	}); ok {
-		status = rep.Status()
-	}
-
-	w.Header().Add("Content-Type", "application/json")
-
-	w.WriteHeader(status)
-
-	err := json.NewEncoder(w).Encode(v)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func isStructWithJson(t reflect.Type) bool {

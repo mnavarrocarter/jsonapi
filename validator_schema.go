@@ -24,7 +24,7 @@ func WithSchema(schema io.Reader) OptsFn {
 	}
 }
 
-// jsonSchemaValidator validates a request body using json _testdata
+// jsonSchemaValidator validates a request body using json testdata
 // It uses the "github.com/xeipuuv/gojsonschema" library to validate
 type jsonSchemaValidator struct {
 	loader gojsonschema.JSONLoader
@@ -37,7 +37,7 @@ func (v *jsonSchemaValidator) Validate(req *http.Request) ([]*ErrorItem, error) 
 
 	b, err := io.ReadAll(req.Body)
 	if err != nil {
-		return nil, ErrUnexpected
+		return nil, ErrValidation
 	}
 
 	loader := gojsonschema.NewBytesLoader(b)
@@ -53,7 +53,11 @@ func (v *jsonSchemaValidator) Validate(req *http.Request) ([]*ErrorItem, error) 
 	}
 
 	if err != nil {
-		return nil, ErrUnexpected
+		return nil, &apiError{
+			code: 400,
+			msg:  "Error while validating the request",
+			prev: err,
+		}
 	}
 
 	if result.Valid() {

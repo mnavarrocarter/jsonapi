@@ -43,13 +43,13 @@ func Test_WithVar(t *testing.T) {
 		{
 			caseName:         "not found",
 			req:              httptest.NewRequest("GET", "http://localhost:8000/user", http.NoBody),
-			expectedResponse: []byte(`{"status":404,"kind":"Not Found","details":"Handler not found for request","meta":{"method":"GET","path":"/user"}}` + "\n"),
+			expectedResponse: []byte(`{"status":404,"details":"No handler found for GET /user"}` + "\n"),
 			expectedStatus:   http.StatusNotFound,
 		},
 		{
 			caseName:         "method not allowed",
 			req:              httptest.NewRequest("POST", "http://localhost:8000/user/1234", http.NoBody),
-			expectedResponse: []byte(`{"status":405,"kind":"Method Not Allowed","details":"Method not allowed for request","meta":{"method":"POST","path":"/user/1234"}}` + "\n"),
+			expectedResponse: []byte(`{"status":405,"details":"Method not allowed for POST /user/1234"}` + "\n"),
 			expectedStatus:   http.StatusMethodNotAllowed,
 		},
 	}

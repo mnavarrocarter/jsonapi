@@ -39,11 +39,11 @@ func (vi *varInjector) Resolve(req *http.Request, t reflect.Type, pos int) (refl
 
 	val, ok := vars[vi.key]
 	if !ok {
-		return reflect.Value{}, fmt.Errorf("%w: key '%s' does not exist in mux vars", ErrUnexpected, vi.key)
+		return reflect.Value{}, fmt.Errorf("%w: key '%s' does not exist in mux vars", ErrArgumentResolution, vi.key)
 	}
 
 	if !reflect.TypeOf(val).AssignableTo(t) {
-		return reflect.Value{}, fmt.Errorf("%w: argument cannot be assigned to declared type", ErrUnexpected)
+		return reflect.Value{}, fmt.Errorf("%w: argument cannot be assigned to declared type", ErrArgumentResolution)
 	}
 
 	return reflect.ValueOf(val), nil

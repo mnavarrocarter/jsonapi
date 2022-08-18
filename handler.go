@@ -1,6 +1,7 @@
 package jsonapi
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"reflect"
@@ -16,9 +17,6 @@ type JsonHandler struct {
 	fn               *reflectedFn     // The wrapper over the reflected function
 	RequestValidator RequestValidator // The validator for the request
 	ArgumentResolver ArgumentResolver // The argument resolver to be used
-	ErrorLogger      ErrorLogger      // The error logger to be used
-	ErrorCaster      ErrorCaster      // The error caster to be used
-	ResponseSender   ResponseSender   // Sends the response
 	SkipPanic        bool             // Whether to skip panics or not
 }
 
@@ -30,13 +28,25 @@ func (h *JsonHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Validate the request
 	if h.RequestValidator != nil {
 		items, err := h.RequestValidator.Validate(req)
+		if errors.Is(err, ErrEmptyBody) {
+			HandleError(w, req, &apiError{
+				code: http.StatusBadRequest,
+				msg:  "Request body cannot be empty",
+			})
+			return
+		}
+
 		if err != nil {
-			h.sendError(w, req, err)
+			HandleError(w, req, &apiError{
+				code: http.StatusInternalServerError,
+				msg:  "There was an error while validating the request",
+				prev: err,
+			})
 			return
 		}
 
 		if len(items) != 0 {
-			h.sendError(w, req, items)
+			SendResponse(w, req, items)
 			return
 		}
 	}
@@ -46,38 +56,41 @@ func (h *JsonHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	for i, t := range h.fn.in {
 		v, err := h.ArgumentResolver.Resolve(req, t, i)
-		if err != nil {
-			h.sendError(w, req, err)
+		if errors.Is(err, ErrEmptyBody) {
+			HandleError(w, req, &apiError{
+				code: http.StatusBadRequest,
+				msg:  "Request body cannot be empty",
+				prev: err,
+			})
 			return
 		}
+
+		if err != nil {
+			HandleError(w, req, &apiError{
+				code: http.StatusInternalServerError,
+				msg:  "Error while trying to resolve handler arguments",
+				prev: err,
+			})
+			return
+		}
+
 		args = append(args, v)
 	}
 
 	defer func() {
 		if r := recover(); r != nil && h.SkipPanic == false {
-			h.sendError(w, req, r)
+			err := panicToError(r)
+			HandleError(w, req, err)
 		}
 	}()
 
 	out, err := h.fn.call(args)
 
-	// If the error is not nil, then we have to return it
-	// This is a domain error, so it should use the error status code and the original message.
 	if err != nil {
-		h.sendError(w, req, err)
+		HandleError(w, req, err)
 		return
 	}
 
-	h.ResponseSender.SendResponse(w, out)
+	SendResponse(w, req, out)
 	return
-}
-
-func (h *JsonHandler) sendError(w http.ResponseWriter, r *http.Request, v interface{}) {
-	err := h.ErrorCaster.CastError(v)
-
-	if err != nil {
-		h.ErrorLogger.LogError(r, err)
-	}
-
-	h.ResponseSender.SendResponse(w, err)
 }
