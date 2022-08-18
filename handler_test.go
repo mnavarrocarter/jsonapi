@@ -146,6 +146,19 @@ func TestHandler(t *testing.T) {
 			expectedStatus:   http.StatusNoContent,
 		},
 		{
+			name: "double nil error response",
+			req: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "https://example.com", mustOpen(t, "valid.json"))
+			}(),
+			handler: func() (map[string]interface{}, error) {
+				return map[string]interface{}{
+					"msg": "hello",
+				}, nil
+			},
+			expectedResponse: []byte(`{"msg":"hello"}` + "\n"),
+			expectedStatus:   http.StatusOK,
+		},
+		{
 			name: "panic response",
 			req: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://example.com", mustOpen(t, "valid.json"))
