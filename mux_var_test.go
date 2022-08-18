@@ -1,4 +1,4 @@
-package gmux_test
+package jsonapi_test
 
 import (
 	"bytes"
@@ -6,23 +6,26 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/mnavarrocarter/jsonapi"
-	"github.com/mnavarrocarter/jsonapi/gmux"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-func Test_Mux(t *testing.T) {
+func init() {
+	jsonapi.VarFunc = mux.Vars
+}
+
+func Test_WithVar(t *testing.T) {
 	handler := jsonapi.Wrap(func(_ context.Context, id string) map[string]string {
 		return map[string]string{
 			"msg": fmt.Sprintf("user id is %s", id),
 		}
-	}, gmux.WithVar("id", 1))
+	}, jsonapi.WithVar("id", 1))
 
 	router := mux.NewRouter()
-	router.NotFoundHandler = gmux.NotFoundHandler
-	router.MethodNotAllowedHandler = gmux.MethodNotAllowedHandler
+	router.NotFoundHandler = jsonapi.NotFoundHandler
+	router.MethodNotAllowedHandler = jsonapi.MethodNotAllowedHandler
 	router.Methods("GET").Path("/user/{id}").Handler(handler)
 
 	tt := []struct {

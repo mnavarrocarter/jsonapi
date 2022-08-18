@@ -117,7 +117,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mnavarrocarter/jsonapi"
-	"github.com/mnavarrocarter/jsonapi/jsonschema"
 	"net/http"
 	"strings"
 )
@@ -155,7 +154,7 @@ var schema = `{
 }`
 
 func main() {
-	handler := jsonapi.Wrap(Greet, jsonschema.WithSchema(strings.NewReader(schema)))
+	handler := jsonapi.Wrap(Greet, jsonapi.WithSchema(strings.NewReader(schema)))
 
 	err := http.ListenAndServe(":8000", handler)
 	if err != nil {
@@ -168,61 +167,4 @@ You can make your own validation logic by implementing `jsonapi.RequestValidator
 
 ### Error Handling
 
-The `JsonHandler` has smart and consistent error handling baked in.
-
-For instance, `error` types returned from inside the function are returned to the user in a message.
-
-These are assumed to be domain errors that contain useful information to the user of your api.
-
-```text
-POST http://localhost:8000
-Content-Type: application/json
-
-{
-  "name": ""
-}
-
----
-
-HTTP/1.1 400 Bad Request
-Content-Type: application/json
-Date: Mon, 25 Jul 2022 12:21:49 GMT
-Content-Length: 73
-
-{
-  "status": 400,
-  "kind": "Domain Error",
-  "details": "you must provide a name"
-}
-```
-
-Panics, on the other hand, represent unexpected server error conditions and are reported with a fixed error
-message and a `500` status code.
-
-```text
-POST http://localhost:8000
-Content-Type: application/json
-
-{
-  "name": "",
-  "should_panic": true
-}
-
----
-
-HTTP/1.1 500 Internal Server Error
-Content-Type: application/json
-Date: Mon, 25 Jul 2022 12:25:33 GMT
-Content-Length: 78
-
-{
-  "status": 500,
-  "kind": "Unknown",
-  "details": "Request failed with unknown error"
-}
-```
-
-When a panic occurs from inside a handler, it is logged using the default `ErrorLogger` so you can access
-the information about the error.
-
-If you wish to handle panics yourself and let them bubble, you can set `SkipPanic = true` in the `JsonHandler`.
+Errors are handled properly by the handler's error handler.

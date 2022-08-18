@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/mnavarrocarter/jsonapi/jsonschema"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -106,7 +105,7 @@ func TestHandler(t *testing.T) {
 			expectedLogCalls: 1,
 		},
 		{
-			name: "valid json struct pointer with response and no testdata",
+			name: "valid json struct pointer with response and no _testdata",
 			req: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://example.com", mustOpen(t, "valid.json"))
 			}(),
@@ -117,7 +116,7 @@ func TestHandler(t *testing.T) {
 			expectedStatus:   http.StatusOK,
 		},
 		{
-			name: "valid json struct value with response and no testdata",
+			name: "valid json struct value with response and no _testdata",
 			req: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://example.com", mustOpen(t, "valid.json"))
 			}(),
@@ -215,7 +214,7 @@ func TestHandler(t *testing.T) {
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			handler := jsonapi.Wrap(test.handler, jsonschema.WithSchema(test.schema))
+			handler := jsonapi.Wrap(test.handler, jsonapi.WithSchema(test.schema))
 
 			spy := &handlerSpy{}
 			handler.ErrorLogger = spy

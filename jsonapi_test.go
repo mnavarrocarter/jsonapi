@@ -11,12 +11,12 @@ import (
 	"testing"
 )
 
-//go:embed testdata
+//go:embed _testdata
 var testdata embed.FS
 
 func mustOpen(t *testing.T, name string) fs.File {
 	t.Helper()
-	f, err := testdata.Open(fmt.Sprintf("testdata/%s", name))
+	f, err := testdata.Open(fmt.Sprintf("_testdata/%s", name))
 	if err != nil {
 		panic(err)
 	}
