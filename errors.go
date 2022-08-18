@@ -18,18 +18,20 @@ func handleError(w http.ResponseWriter, req *http.Request, err error) {
 	SendResponse(w, req, err)
 }
 
-type apiError struct {
-	code int
-	msg  string
-	prev error
-}
-
+// Wrapper mimics the unwrap functionality in go errors package
 type Wrapper interface {
 	Unwrap() error
 }
 
+// Coder yields the status code for an error
 type Coder interface {
 	Code() int
+}
+
+type apiError struct {
+	code int
+	msg  string
+	prev error
 }
 
 func (e *apiError) Unwrap() error {
