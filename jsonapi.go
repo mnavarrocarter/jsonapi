@@ -7,7 +7,7 @@ type OptsFn func(h *JsonHandler)
 // See JsonHandler for documentation on how this handler works.
 //
 // Also, see Defaults to study the default implementations of the different components.
-func Wrap(fn any, opts ...OptsFn) *JsonHandler {
+func Wrap(fn interface{}, opts ...OptsFn) *JsonHandler {
 	h := &JsonHandler{
 		fn:               reflectFunc(fn),
 		RequestValidator: Defaults,

@@ -8,7 +8,7 @@ import (
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 // reflectFunc creates a *reflectedFn
-func reflectFunc(fn any) *reflectedFn {
+func reflectFunc(fn interface{}) *reflectedFn {
 	t := reflect.TypeOf(fn)
 	if t.Kind() != reflect.Func {
 		panic("function expected")

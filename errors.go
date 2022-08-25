@@ -46,7 +46,7 @@ func (e *apiError) Code() int {
 	return e.code
 }
 
-func panicToError(v any) (err error) {
+func panicToError(v interface{}) (err error) {
 	switch t := v.(type) {
 	case string:
 		err = errors.New(t)

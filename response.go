@@ -11,11 +11,11 @@ type errorResponse struct {
 	Errors     []*ErrorItem `json:"errors,omitempty"`
 }
 
-var SendResponse ResponseSenderFunc = sendResponse
+var SendResponse = sendResponse
 
-type ResponseSenderFunc = func(w http.ResponseWriter, req *http.Request, v any)
+type ResponseSenderFunc = func(w http.ResponseWriter, req *http.Request, v interface{})
 
-func sendResponse(w http.ResponseWriter, _ *http.Request, v any) {
+func sendResponse(w http.ResponseWriter, _ *http.Request, v interface{}) {
 	if v == nil {
 		w.WriteHeader(http.StatusNoContent)
 		return

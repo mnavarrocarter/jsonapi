@@ -16,7 +16,7 @@ func TestHandler(t *testing.T) {
 	tt := []struct {
 		name             string
 		req              *http.Request
-		handler          any
+		handler          interface{}
 		schema           io.Reader
 		expectedResponse []byte
 		customResolver   jsonapi.ArgumentResolver
